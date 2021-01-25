@@ -11,13 +11,17 @@ public class CameraFollow : MonoBehaviour
     private LayerMask layerMask;
     private Camera cam;
 
-    void Start()
+    private void Start()
     {
         layerMask = LayerMask.GetMask("CameraBounds");
         cam = GetComponent<Camera>();
+
+        Vector3 newPos = transform.position;
+        newPos.z = target.transform.position.z - 10;
+        transform.position = newPos;
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
         if (target)
         {
@@ -36,7 +40,7 @@ public class CameraFollow : MonoBehaviour
         }
     }
 
-    void ChangeOffset(Vector3 rayAngle, float rayLength)
+    private void ChangeOffset(Vector3 rayAngle, float rayLength)
     {
         RaycastHit2D hit = Physics2D.Raycast(target.position, rayAngle, rayLength, layerMask);
         if (hit)
@@ -46,5 +50,10 @@ public class CameraFollow : MonoBehaviour
         }
         else
             Debug.DrawRay(target.position, rayAngle * rayLength);
+    }
+
+    public void ResetPos()
+    {
+        transform.position = new Vector3(0, 0, transform.position.z);
     }
 }

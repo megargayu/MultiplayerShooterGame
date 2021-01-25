@@ -1,33 +1,39 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using Mirror;
 using UnityEngine;
 
-public class Projectile : MonoBehaviour
+// TODO: If server is not in scene (so, in production, never), then projectiles do not detect walls and they never explode but keep going until infinity
+public class Projectile : NetworkBehaviour
 {
-    public Gun gun;
+    [SyncVar] public float damage;
     public GameObject explosion;
+    private NetworkMatchChecker networkMatchChecker;
 
-    void Start()
+    private void Start()
     {
-        Vector3 mouseDir = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
-        mouseDir.z = 0;
-        mouseDir = mouseDir.normalized;
-
-        transform.position += mouseDir;
-        GetComponent<Rigidbody2D>().AddForce(mouseDir * gun.speed);
+        networkMatchChecker = GetComponent<NetworkMatchChecker>();
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
+    [ServerCallback]
+    private void OnTriggerEnter2D(Collider2D collider)
     {
-        Debug.Log("hit " + collision.gameObject.name);
-
-        if (collision.gameObject.CompareTag("NetworkPlayer"))
+        NetworkMatchChecker colMatchChecker = collider.GetComponent<NetworkMatchChecker>();
+        if (collider.gameObject.CompareTag("Player") && colMatchChecker.matchId == networkMatchChecker.matchId)
         {
-            Debug.Log("hit player");
-            collision.gameObject.GetComponent<DummyPlayer>().health -= gun.damage;
+            collider.GetComponent<PlayerController>().RpcDamagePlayer(damage);
+            collider.GetComponent<AudioSync>().RpcPlaySound(1);
+        }
+        else if (collider.gameObject.CompareTag("Enemy") && colMatchChecker.matchId == networkMatchChecker.matchId)
+        {
+            collider.GetComponent<Enemy>().TakeDamage(damage);
+            collider.GetComponent<AudioSync>().RpcPlaySound(1);
         }
 
-        Instantiate(explosion, transform.position, Quaternion.identity);
-        Destroy(gameObject);
+        if (colMatchChecker == null || collider.GetComponent<NetworkMatchChecker>().matchId == networkMatchChecker.matchId)
+        {
+            GameObject explode = Instantiate(explosion, transform.position, Quaternion.identity);
+            explode.GetComponent<NetworkMatchChecker>().matchId = networkMatchChecker.matchId;
+            NetworkServer.Spawn(explode);
+            Destroy(gameObject);
+        }
     }
 }

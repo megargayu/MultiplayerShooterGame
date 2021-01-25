@@ -1,12 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using Mirror;
 using UnityEngine;
 
-public class Explosion : MonoBehaviour
+[RequireComponent(typeof(AudioSync))]
+public class Explosion : NetworkBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [ServerCallback]
+    private void Start()
     {
+        GetComponent<AudioSync>().RpcPlaySound(0);
         Destroy(gameObject, GetComponent<ParticleSystem>().main.startLifetime.constantMax);
     }
 }

@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Projectile
   - NetworkPlayer
+  - Enemy
+  - GameManager
   layers:
   - Default
   - TransparentFX
@@ -17,8 +19,8 @@ TagManager:
   - 
   - PostProcessing
   - CameraBounds
-  - 
-  - 
+  - Character
+  - CharacterCollisionBlocker
   - 
   - 
   - 
